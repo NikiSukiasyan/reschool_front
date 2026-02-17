@@ -18,11 +18,30 @@ const Loading = () => (
 );
 
 const Index = () => {
-  const { data, isPending } = useHomePage();
+  const { data, isPending, isError, error } = useHomePage();
   const { data: settings } = useSettings();
 
-  if (isPending || !data) {
+  if (isPending) {
     return <Loading />;
+  }
+
+  if (isError || !data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-500 mb-2">Failed to load page</h1>
+          <p className="text-muted-foreground mb-4">
+            {error?.message || 'Unable to connect to the server'}
+          </p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
