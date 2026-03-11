@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { ExternalLink } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AnimatedSection from "@/components/shared/AnimatedSection";
@@ -116,31 +118,81 @@ const About = () => {
                 const color = brandColors[i % brandColors.length];
                 return (
                   <AnimatedSection key={m.id} delay={i * 0.1}>
-                    <div className="text-center p-6 rounded-2xl border border-border bg-card">
-                      {m.photo ? (
-                        <img
-                          src={m.photo}
-                          alt={m.name}
-                          className="w-16 h-16 rounded-full mx-auto mb-4 object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div
-                          className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-xl font-bold text-white"
-                          style={{ background: `linear-gradient(135deg, ${color}, ${brandColors[(i + 1) % brandColors.length]})` }}
-                        >
-                          {m.name.charAt(0)}
-                        </div>
-                      )}
-                      <h3 className="font-bold text-sm" style={{ color }}>{m.name}</h3>
-                      <p className="text-xs mt-1" style={{ color: brandColors[(i + 2) % brandColors.length] }}>{m.role}</p>
-                    </div>
+                    <Link to={`/mentors/${m.id}`} className="block cursor-pointer">
+                      <div className="text-center p-6 rounded-2xl border border-border bg-card hover:border-opacity-30 transition-all">
+                        {m.photo ? (
+                          <img
+                            src={m.photo}
+                            alt={m.name}
+                            className="w-16 h-16 rounded-full mx-auto mb-4 object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div
+                            className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-xl font-bold text-white"
+                            style={{ background: `linear-gradient(135deg, ${color}, ${brandColors[(i + 1) % brandColors.length]})` }}
+                          >
+                            {m.name.charAt(0)}
+                          </div>
+                        )}
+                        <h3 className="font-bold text-sm" style={{ color }}>{m.name}</h3>
+                        <p className="text-xs mt-1" style={{ color: brandColors[(i + 2) % brandColors.length] }}>{m.role}</p>
+                      </div>
+                    </Link>
                   </AnimatedSection>
                 );
               })}
             </div>
           </div>
         </section>
+
+        {/* Projects */}
+        {data.projects && data.projects.length > 0 && (
+          <section className="py-24">
+            <div className="container mx-auto px-4">
+              <SectionHeader title={t('about.projects_title')} />
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                {data.projects.map((project, i) => {
+                  const color = brandColors[i % brandColors.length];
+                  return (
+                    <AnimatedSection key={project.id} delay={i * 0.08}>
+                      <a
+                        href={project.url}
+                        target={project.link_target === 'blank' ? '_blank' : '_self'}
+                        rel="noopener noreferrer"
+                        className="block group"
+                      >
+                        <div className="rounded-2xl border border-border bg-card overflow-hidden hover:border-opacity-30 transition-all">
+                          {project.image ? (
+                            <img
+                              src={project.image}
+                              alt={project.title}
+                              className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-105"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div
+                              className="w-full h-40 flex items-center justify-center text-3xl font-bold text-white"
+                              style={{ background: `linear-gradient(135deg, ${color}, ${brandColors[(i + 1) % brandColors.length]})` }}
+                            >
+                              {project.title.charAt(0)}
+                            </div>
+                          )}
+                          <div className="p-5 flex items-center justify-between">
+                            <h3 className="font-bold text-sm" style={{ color }}>{project.title}</h3>
+                            {project.link_target === 'blank' && (
+                              <ExternalLink size={14} className="text-muted-foreground flex-shrink-0" />
+                            )}
+                          </div>
+                        </div>
+                      </a>
+                    </AnimatedSection>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
       </main>
       <Footer />
     </>

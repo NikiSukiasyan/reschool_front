@@ -128,8 +128,8 @@ const FloatingCard = memo(({
       animate={getAnimateProps()}
       transition={getTransition()}
       whileHover={phase >= 3 ? { zIndex: 40 } : undefined}
-      onHoverStart={() => { (window as any).__heroCardHovered = true; onHoverChange(index); }}
-      onHoverEnd={() => { (window as any).__heroCardHovered = false; onHoverChange(null); }}
+      onHoverStart={() => onHoverChange(index)}
+      onHoverEnd={() => onHoverChange(null)}
     >
       {/* Card body + detail panel wrapper */}
       <div className="relative flex items-stretch gap-0">
@@ -293,6 +293,25 @@ const HeroVisual = ({ heroCards }: { heroCards?: CourseList[] }) => {
   const [phase, setPhase] = useState(0);
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleHoverChange = useCallback((index: number | null) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    if (index !== null) {
+      // Immediately show on hover
+      (window as any).__heroCardHovered = true;
+      setHoveredIndex(index);
+    } else {
+      // Debounce unhover — prevents flickering when mouse moves between card and detail panel
+      hoverTimeoutRef.current = setTimeout(() => {
+        (window as any).__heroCardHovered = false;
+        setHoveredIndex(null);
+      }, 150);
+    }
+  }, []);
 
   const cards = useMemo(() => {
     if (heroCards && heroCards.length > 0) {
@@ -310,7 +329,10 @@ const HeroVisual = ({ heroCards }: { heroCards?: CourseList[] }) => {
     const t1 = setTimeout(() => setPhase(1), 300);   // gather to center
     const t2 = setTimeout(() => setPhase(2), 1000);  // explode outward
     const t3 = setTimeout(() => setPhase(3), 1800);  // settle into place
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    return () => {
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    };
   }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -402,7 +424,7 @@ const HeroVisual = ({ heroCards }: { heroCards?: CourseList[] }) => {
       >
         {/* Cards */}
         {visibleCards.map((card, i) => (
-          <FloatingCard key={card.label} card={card} pos={positions[i]} index={i} phase={phase} hoveredIndex={hoveredIndex} onHoverChange={setHoveredIndex} />
+          <FloatingCard key={card.label} card={card} pos={positions[i]} index={i} phase={phase} hoveredIndex={hoveredIndex} onHoverChange={handleHoverChange} />
         ))}
 
       </motion.div>

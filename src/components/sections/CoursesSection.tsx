@@ -32,7 +32,7 @@ const CoursesSection = ({ courses }: CoursesSectionProps) => {
                       <p className="text-xs text-muted-foreground mt-0.5">{course.subtitle}</p>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">{course.description}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-3">{course.description}</p>
                   <div className="flex items-center gap-3 mb-4">
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock size={12} style={{ color }} /> {course.duration}

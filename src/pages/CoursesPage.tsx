@@ -60,7 +60,7 @@ const CoursesPage = () => {
                         <div className="flex-1">
                           <h2 className="text-2xl font-bold mb-1" style={{ color }}>{course.title}</h2>
                           <p className="text-sm mb-4" style={{ color: brandColors[(i + 1) % brandColors.length] }}>{course.subtitle}</p>
-                          <p className="text-muted-foreground leading-relaxed mb-6">{course.description}</p>
+                          <p className="text-muted-foreground leading-relaxed mb-6 line-clamp-3">{course.description}</p>
 
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                             {[

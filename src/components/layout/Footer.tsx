@@ -1,6 +1,108 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useSettings } from "@/hooks";
 import { useT } from "@/providers/TranslationProvider";
+import { api } from "@/lib/api";
+
+interface CertResult {
+  found: boolean;
+  student_name?: string;
+  course_title?: string;
+  has_file?: boolean;
+  file_url?: string;
+}
+
+const CertificateChecker = () => {
+  const [value, setValue] = useState("");
+  const [result, setResult] = useState<CertResult | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const check = async () => {
+    const n = value.trim().toUpperCase();
+    if (!n) return;
+    setLoading(true);
+    setResult(null);
+    try {
+      const { data } = await api.get(`/certificates/${encodeURIComponent(n)}`);
+      setResult(data);
+    } catch {
+      setResult({ found: false });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="border-t border-border mt-10 pt-8">
+      <div className="flex flex-col md:flex-row md:items-start gap-4">
+        <div className="flex-1">
+          <h4 className="font-semibold text-sm mb-1" style={{ color: "#8b5cf6" }}>
+            სერთიფიკატის შემოწმება
+          </h4>
+          <p className="text-xs text-muted-foreground mb-3">
+            შეიყვანეთ სერთიფიკატის ნომერი (მაგ. RS-10097-2026)
+          </p>
+          <div className="flex gap-2 max-w-sm">
+            <input
+              type="text"
+              value={value}
+              onChange={e => setValue(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && check()}
+              placeholder="RS-XXXXX-XXXX"
+              className="flex-1 px-3 py-2 rounded-lg bg-background border border-border text-xs focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/50 uppercase tracking-widest"
+            />
+            <button
+              onClick={check}
+              disabled={loading || !value.trim()}
+              className="px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg, #8b5cf6, #06b6d4)" }}
+            >
+              {loading ? "..." : "შემოწმება"}
+            </button>
+          </div>
+
+          {result && (
+            <div
+              className={`mt-2.5 text-xs rounded-lg px-3 py-2.5 border ${
+                result.found
+                  ? "border-green-500/30 bg-green-500/5"
+                  : "border-red-500/30 bg-red-500/5"
+              }`}
+            >
+              {result.found ? (
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-green-500 font-medium">✓ სერთიფიკატი ნაპოვნია</span>
+                  <span className="text-muted-foreground">
+                    {result.student_name} · {result.course_title}
+                  </span>
+                  {result.has_file && result.file_url && (
+                    <a
+                      href={result.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#8b5cf6] font-semibold hover:underline"
+                    >
+                      სერთიფიკატის ნახვა →
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <span className="text-red-500 font-medium">✗ სერთიფიკატი ვერ მოიძებნა</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        <Link
+          to="/certificate"
+          className="text-xs text-muted-foreground hover:text-[#8b5cf6] transition-colors md:mt-7 whitespace-nowrap"
+        >
+          სრული გვერდი →
+        </Link>
+      </div>
+    </div>
+  );
+};
 
 const Footer = () => {
   const { data: settings } = useSettings();
@@ -65,7 +167,9 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-border mt-12 pt-8 text-center text-sm text-muted-foreground">
+        <CertificateChecker />
+
+        <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
           &copy; {new Date().getFullYear()} re:school. {t('footer.copyright')}
         </div>
       </div>

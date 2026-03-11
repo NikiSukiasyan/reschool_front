@@ -16,6 +16,9 @@ const Students = lazy(() => import("./pages/Students"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogDetail = lazy(() => import("./pages/BlogDetail"));
 const Contact = lazy(() => import("./pages/Contact"));
+const MentorDetail = lazy(() => import("./pages/MentorDetail"));
+const Gallery = lazy(() => import("./pages/Gallery"));
+const CertificateVerify = lazy(() => import("./pages/CertificateVerify"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,7 +54,10 @@ const App = () => (
               <Route path="/students" element={<Students />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogDetail />} />
+              <Route path="/mentors/:id" element={<MentorDetail />} />
+              <Route path="/gallery" element={<Gallery />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/certificate" element={<CertificateVerify />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

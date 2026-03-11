@@ -7,6 +7,8 @@ export { useTestimonials } from './queries/use-testimonials';
 export { useSettings } from './queries/use-settings';
 export { usePartners } from './queries/use-partners';
 export { useMentors } from './queries/use-mentors';
+export { useMentorDetail } from './queries/use-mentor-detail';
+export { useGallery } from './queries/use-gallery';
 export { useFaqs } from './queries/use-faqs';
 export { useTranslations } from './queries/use-translations';
 // Mutations

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Clock, Calendar, DollarSign, BookOpen, ArrowLeft, Monitor, Award, CheckCircle, Cpu, Mail, Phone, Loader2 } from "lucide-react";
+import { MapPin, Clock, Calendar, DollarSign, BookOpen, ArrowLeft, Monitor, Award, CheckCircle, Cpu, Mail, Phone, Loader2, CreditCard, X } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AnimatedSection from "@/components/shared/AnimatedSection";
@@ -10,6 +10,7 @@ import SEOHead from "@/components/shared/SEOHead";
 import { courseJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 import { useCourse, useSettings } from "@/hooks";
 import { useT } from "@/providers/TranslationProvider";
+import { api } from "@/lib/api";
 
 const brandColors = ["#e44d90", "#8b5cf6", "#3b82f6", "#06b6d4"];
 
@@ -20,6 +21,30 @@ const CourseDetail = () => {
   const { data: settings } = useSettings();
   const [activeStage, setActiveStage] = useState(0);
   const [selectedLocation, setSelectedLocation] = useState(0);
+  const [paymentModal, setPaymentModal] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({ first_name: "", last_name: "", tel: "", email: "" });
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  const handlePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!course) return;
+    setPaymentLoading(true);
+    setPaymentError(null);
+    try {
+      const res = await api.post("/flitt/checkout", {
+        course_slug: course.slug,
+        first_name: paymentForm.first_name,
+        last_name: paymentForm.last_name,
+        tel: paymentForm.tel,
+        email: paymentForm.email,
+      });
+      window.location.href = res.data.checkout_url;
+    } catch (err: any) {
+      setPaymentError(err?.response?.data?.message || err?.response?.data?.error || "შეცდომა. სცადეთ თავიდან.");
+      setPaymentLoading(false);
+    }
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -52,7 +77,7 @@ const CourseDetail = () => {
     );
   }
 
-  const stage = course.stages[activeStage];
+  const stage = course.stages[activeStage] ?? null;
 
   const contactEmail = settings?.contact.email ?? "reschoolspace@gmail.com";
   const contactPhone = settings?.contact.phone ?? "+995 551 420 099";
@@ -125,14 +150,24 @@ const CourseDetail = () => {
                   <div className="text-muted-foreground leading-relaxed mt-4 whitespace-pre-line text-sm">
                     {course.full_description}
                   </div>
-                  <div className="mt-6">
+                  <div className="mt-6 flex flex-wrap gap-3">
                     <Link
-                      to="/contact"
+                      to={`/contact?course=${course.slug}`}
                       className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold text-white transition-all hover:scale-105"
                       style={{ background: "linear-gradient(135deg, #e44d90, #8b5cf6, #3b82f6, #06b6d4)", boxShadow: "0 4px 20px -4px rgba(139, 92, 246, 0.4)" }}
                     >
                       {t('course_detail.register_button')}
                     </Link>
+                    {course.has_payment && course.price && (
+                      <button
+                        onClick={() => setPaymentModal(true)}
+                        className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-105 border-2"
+                        style={{ borderColor: "#8b5cf6", color: "#8b5cf6" }}
+                      >
+                        <CreditCard size={16} />
+                        ონლაინ გადახდა — {course.price} ₾
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -178,11 +213,11 @@ const CourseDetail = () => {
             <section className="py-10">
               <div className="container mx-auto px-4">
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  <MetaCard icon={Calendar} label={t('course_detail.start_date')} value={stage.start_date} color="#e44d90" />
-                  <MetaCard icon={Clock} label={t('course_detail.duration')} value={stage.duration} color="#8b5cf6" />
-                  <MetaCard icon={MapPin} label={t('course_detail.location')} value={course.locations[selectedLocation].city} color="#3b82f6" />
-                  <MetaCard icon={BookOpen} label={t('course_detail.schedule')} value={stage.schedule} color="#06b6d4" />
-                  <MetaCard icon={DollarSign} label={t('course_detail.price')} value={stage.price} color="#e44d90" />
+                  <MetaCard icon={Calendar} label={t('course_detail.start_date')} value={stage?.start_date ?? '—'} color="#e44d90" />
+                  <MetaCard icon={Clock} label={t('course_detail.duration')} value={stage?.duration ?? '—'} color="#8b5cf6" />
+                  <MetaCard icon={MapPin} label={t('course_detail.location')} value={course.locations[selectedLocation]?.city ?? '—'} color="#3b82f6" />
+                  <MetaCard icon={BookOpen} label={t('course_detail.schedule')} value={stage?.schedule ?? '—'} color="#06b6d4" />
+                  <MetaCard icon={DollarSign} label={t('course_detail.price')} value={stage?.price ?? '—'} color="#e44d90" />
                 </div>
               </div>
             </section>
@@ -192,11 +227,11 @@ const CourseDetail = () => {
               <div className="container mx-auto px-4">
                 <div className="grid lg:grid-cols-3 gap-12">
                   <div className="lg:col-span-2 space-y-12">
-                    <ContentSection title={t('course_detail.goal')} content={stage.goal} color="#e44d90" />
-                    <ContentSection title={t('course_detail.prerequisite')} content={stage.prerequisite} color="#8b5cf6" />
+                    {stage && <ContentSection title={t('course_detail.goal')} content={stage.goal} color="#e44d90" />}
+                    {stage && <ContentSection title={t('course_detail.prerequisite')} content={stage.prerequisite} color="#8b5cf6" />}
 
                     {/* Topics */}
-                    <div>
+                    {stage && <div>
                       <h3 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: "#3b82f6" }}>
                         <BookOpen size={20} style={{ color: "#3b82f6" }} />
                         {t('course_detail.topics')}
@@ -217,10 +252,10 @@ const CourseDetail = () => {
                           </motion.div>
                         ))}
                       </div>
-                    </div>
+                    </div>}
 
                     {/* Outcomes */}
-                    <div>
+                    {stage && <div>
                       <h3 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: "#06b6d4" }}>
                         <Award size={20} style={{ color: "#06b6d4" }} />
                         {t('course_detail.outcomes')}
@@ -239,7 +274,7 @@ const CourseDetail = () => {
                           </motion.div>
                         ))}
                       </div>
-                    </div>
+                    </div>}
 
                     {/* Computer Requirements */}
                     <div>
@@ -256,12 +291,22 @@ const CourseDetail = () => {
                     <div className="rounded-2xl border border-border bg-card p-6 sticky top-24">
                       <h3 className="font-bold text-foreground mb-4">{t('course_detail.interested')}</h3>
                       <Link
-                        to="/contact"
-                        className="w-full flex items-center justify-center px-6 py-3 rounded-xl text-sm font-bold text-white mb-4"
+                        to={`/contact?course=${course.slug}`}
+                        className="w-full flex items-center justify-center px-6 py-3 rounded-xl text-sm font-bold text-white mb-3"
                         style={{ background: "linear-gradient(135deg, #e44d90, #8b5cf6, #3b82f6, #06b6d4)" }}
                       >
                         {t('course_detail.register_button')}
                       </Link>
+                      {course.has_payment && course.price && (
+                        <button
+                          onClick={() => setPaymentModal(true)}
+                          className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:scale-[1.02] mb-4"
+                          style={{ borderColor: "#8b5cf6", color: "#8b5cf6" }}
+                        >
+                          <CreditCard size={14} />
+                          გადახდა — {course.price} ₾
+                        </button>
+                      )}
                       <div className="space-y-3 text-sm">
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Monitor size={14} style={{ color: "#8b5cf6" }} />
@@ -327,8 +372,145 @@ const CourseDetail = () => {
             </section>
           </motion.div>
         </AnimatePresence>
+
+        {/* Mentors */}
+        {course.mentors && course.mentors.length > 0 && (
+          <section className="py-12 bg-card/30">
+            <div className="container mx-auto px-4">
+              <h3 className="text-xl font-bold mb-6" style={{ color: "#8b5cf6" }}>{t('course_detail.mentors')}</h3>
+              <div className="flex flex-wrap gap-4">
+                {course.mentors.map((m, i) => {
+                  const color = brandColors[i % brandColors.length];
+                  return (
+                    <Link key={m.id} to={`/mentors/${m.id}`} className="group">
+                      <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:border-opacity-30 transition-all">
+                        {m.photo ? (
+                          <img src={m.photo} alt={m.name} className="w-10 h-10 rounded-full object-cover" loading="lazy" />
+                        ) : (
+                          <div
+                            className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                            style={{ background: `linear-gradient(135deg, ${color}, ${brandColors[(i + 1) % brandColors.length]})` }}
+                          >
+                            {m.name.charAt(0)}
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-bold group-hover:underline" style={{ color }}>{m.name}</p>
+                          <p className="text-xs text-muted-foreground">{m.role}</p>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
       </main>
       <Footer />
+
+      {/* Payment Modal */}
+      <AnimatePresence>
+        {paymentModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.6)" }}
+            onClick={(e) => { if (e.target === e.currentTarget) setPaymentModal(false); }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-card border border-border rounded-2xl p-6 w-full max-w-md relative"
+            >
+              <button
+                onClick={() => setPaymentModal(false)}
+                className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X size={20} />
+              </button>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #8b5cf6, #3b82f6)" }}>
+                  <CreditCard size={18} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-foreground">ონლაინ გადახდა</h2>
+                  <p className="text-sm text-muted-foreground">{course.title} — {course.price} ₾</p>
+                </div>
+              </div>
+              <form onSubmit={handlePayment} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">სახელი</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="სახელი"
+                      value={paymentForm.first_name}
+                      onChange={(e) => setPaymentForm(f => ({ ...f, first_name: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:border-[#8b5cf6] transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">გვარი</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="გვარი"
+                      value={paymentForm.last_name}
+                      onChange={(e) => setPaymentForm(f => ({ ...f, last_name: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:border-[#8b5cf6] transition-colors"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">ტელეფონი</label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="+995 5XX XXX XXX"
+                    value={paymentForm.tel}
+                    onChange={(e) => setPaymentForm(f => ({ ...f, tel: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:border-[#8b5cf6] transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">ელ. ფოსტა</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="you@example.com"
+                    value={paymentForm.email}
+                    onChange={(e) => setPaymentForm(f => ({ ...f, email: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:border-[#8b5cf6] transition-colors"
+                  />
+                </div>
+                {paymentError && (
+                  <p className="text-sm text-red-500">{paymentError}</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={paymentLoading}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{ background: "linear-gradient(135deg, #8b5cf6, #3b82f6)" }}
+                >
+                  {paymentLoading ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <>
+                      <CreditCard size={16} />
+                      გადახდის გვერდზე გადასვლა
+                    </>
+                  )}
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

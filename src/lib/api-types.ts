@@ -46,6 +46,8 @@ export interface CourseList {
   hero_icon: string | null;
   hero_students: string | null;
   show_in_hero: boolean;
+  has_payment: boolean;
+  price: number | null;
 }
 
 export interface CourseStage {
@@ -125,6 +127,39 @@ export interface Mentor {
   linkedin: string | null;
   facebook: string | null;
   email: string | null;
+}
+
+export interface MentorDetail extends Mentor {
+  courses: { id: number; slug: string; title: string; image: string }[];
+}
+
+// --- Gallery ---
+export interface GalleryPhoto {
+  id: number;
+  url: string;
+  caption: string | null;
+}
+
+export interface GalleryVideo {
+  id: number;
+  url: string;
+  poster: string | null;
+  caption: string | null;
+}
+
+export interface GalleryData {
+  photos: GalleryPhoto[];
+  videos: GalleryVideo[];
+}
+
+// --- Project ---
+export interface Project {
+  id: number;
+  title: string;
+  url: string;
+  link_target: 'blank' | 'self';
+  image: string | null;
+  sort_order: number;
 }
 
 // --- Homepage Sections ---
@@ -221,6 +256,7 @@ export interface AboutPageData {
   timeline: TimelineEntry[];
   mentors: Mentor[];
   statistics: Statistic[];
+  projects: Project[];
 }
 
 // --- Registration ---

@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { Phone, Mail, MapPin, Clock, Send } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AnimatedSection from "@/components/shared/AnimatedSection";
@@ -14,6 +16,7 @@ const brandColors = ["#e44d90", "#8b5cf6", "#3b82f6", "#06b6d4"];
 
 const Contact = () => {
   const { t } = useT();
+  const [searchParams] = useSearchParams();
   const { data: settings } = useSettings();
   const { data: courses } = useCourses();
   const registerMutation = useRegister();
@@ -40,6 +43,14 @@ const Contact = () => {
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
   });
+
+  useEffect(() => {
+    const courseSlug = searchParams.get('course');
+    if (courseSlug && courses) {
+      const matched = courses.find(c => c.slug === courseSlug);
+      if (matched) form.setValue('course_id', matched.id);
+    }
+  }, [courses, searchParams]);
 
   const contactInfo = settings ? [
     { icon: Phone, label: t('contact.phone_label'), value: settings.contact.phone, color: "#e44d90" },
